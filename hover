@@ -1,0 +1,42 @@
+CLEARSCREEN.
+PRINT "Hovering started!".
+PRINT "Abort with CTRL + c".
+PRINT " ".
+PRINT "current Throttle: ".
+PRINT "current Diff: ".
+PRINT "current Max thrust: ".
+PRINT "current weight: ".
+PRINT "currrent gravity: ".
+
+// ********************** Gravity calculations *********************** //
+
+SET current_body to ship:body.
+SET G TO 6.6740831 / 10^11.
+SET fg to G * (current_body:MASS / current_body:radius^2).
+
+// **********************         end          *********************** //
+
+
+SET end TO False.
+SET currentThrottle TO 0.
+SET thrustStart TO MAXTHRUST / fg.
+UNTIL (thrustStart <> MAXTHRUST / fg) {
+    SET w TO SHIP:MASS.
+
+    SET throttleDiff to ((thrustStart * currentThrottle) / (w * 1.63)).
+    PRINT throttleDiff AT (15,4).
+    PRINT thrustStart AT (22,5).
+    PRINT w AT (17,6).
+    PRINT fg AT (19,7).
+
+    if (throttleDiff < 0.499 AND currentThrottle <= 0.999) {
+        SET currentThrottle TO currentThrottle + 0.001.
+        LOCK THROTTLE TO currentThrottle.
+    }
+    if (throttleDiff > 0.501 AND currentThrottle >= 0.001) {
+        SET currentThrottle TO currentThrottle - 0.001.
+        LOCK THROTTLE TO currentThrottle.
+    }
+    WAIT 0.01.
+    PRINT currentThrottle AT (20,3).
+}
