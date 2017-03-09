@@ -7,6 +7,8 @@ PRINT "current Diff: ".
 PRINT "current Max thrust: ".
 PRINT "current weight: ".
 PRINT "currrent gravity: ".
+PRINT "currrent thrust: ".
+PRINT "currrent twr: ".
 
 // ********************** Gravity calculations *********************** //
 
@@ -16,27 +18,63 @@ SET fg to G * (current_body:MASS / current_body:radius^2).
 
 // **********************         end          *********************** //
 
-
 SET end TO False.
 SET currentThrottle TO 0.
-SET thrustStart TO MAXTHRUST / fg.
-UNTIL (thrustStart <> MAXTHRUST / fg) {
+set max_thrust to getMaxThrust().
+SET thrustStart TO max_thrust / fg.
+SET partcountStart TO getPartCount().
+UNTIL (partcountStart <> getPartCount()) {
     SET w TO SHIP:MASS.
 
-    SET throttleDiff to ((thrustStart * currentThrottle) / (w * 1.63)).
+    SET throttleDiff to ((thrustStart * currentThrottle) / w).
     PRINT throttleDiff AT (15,4).
     PRINT thrustStart AT (22,5).
     PRINT w AT (17,6).
     PRINT fg AT (19,7).
+	PRINT max_thrust AT (18,8).
+	PRINT ShipTWR() AT (16,9).
 
-    if (throttleDiff < 0.499 AND currentThrottle <= 0.999) {
-        SET currentThrottle TO currentThrottle + 0.001.
+    if (throttleDiff < 0.999) {
+        SET currentThrottle TO currentThrottle + (0.001 / (throttleDiff + 0.05)).
         LOCK THROTTLE TO currentThrottle.
     }
-    if (throttleDiff > 0.501 AND currentThrottle >= 0.001) {
-        SET currentThrottle TO currentThrottle - 0.001.
+    if (throttleDiff > 1.001) {
+        SET currentThrottle TO currentThrottle - (0.001 * (throttleDiff + 0.05)).
         LOCK THROTTLE TO currentThrottle.
     }
-    WAIT 0.01.
+    WAIT 0.001.
     PRINT currentThrottle AT (20,3).
+	set max_thrust to getMaxThrust().
+}
+
+declare function getMaxThrust {
+    SET thrust TO 0.
+    LIST ENGINES IN engines.
+    FOR eng IN engines {
+        SET thust TO thrust + eng:MAXTHRUST.
+		//PRINT ship:body:ATM:SEALEVELPRESSURE AT (16,11).
+		PRINT eng:MAXTHRUST AT (16,11).
+    }.
+	SET thrust TO MAXTHRUST.
+	PRINT thrust AT (16,10).
+	
+	return thrust.
+}
+
+declare function ShipTWR
+{
+    set mth to SHIP:MAXTHRUST. // (depends on fixed kOS issue 940)
+    set r to SHIP:ALTITUDE+SHIP:BODY:RADIUS.
+    set w to SHIP:MASS * SHIP:BODY:MU / r / r.
+    return mth/w.
+}
+
+declare function getPartCount
+{
+    SET count TO 0.
+    LIST PARTS IN engines.
+	FOR eng IN engines {
+        SET count TO count + 1.
+    }.
+    return count.
 }
